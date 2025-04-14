@@ -16,10 +16,33 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+// savitech LHDC
+soong_config_module_type {
+    name: "lhdc_apex_defaults",
+    module_type: "apex_defaults",
+    config_namespace: "btservices",
+    bool_variables: ["use_lhdc"],
+    properties: [
+        "native_shared_libs",
+    ],
+}
+
+lhdc_apex_defaults {
+    name: "com.android.btservices.lhdc_defaults",
+    soong_config_variables: {
+        use_lhdc: {
+            native_shared_libs: [
+                "liblhdcBT_enc",
+                "liblhdcv5BT_enc",
+            ],
+        },
+    }
+}
+
 // Mainline bluetooth apex module.
 apex {
     name: "com.android.bt",
-    defaults: ["b-launched-apex-module"],
+    defaults: ["b-launched-apex-module", "com.android.btservices.lhdc_defaults"],
     manifest: "manifest.json",
     bootclasspath_fragments: ["com.android.bt-bootclasspath-fragment"],
     systemserverclasspath_fragments: ["com.android.bt-systemserverclasspath-fragment"],
