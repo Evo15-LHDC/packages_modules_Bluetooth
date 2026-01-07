@@ -29,6 +29,7 @@
 #include "a2dp_vendor_aptx_hd_constants.h"
 #include "a2dp_vendor_ldac_constants.h"
 #include "bta/include/bta_av_api.h"
+#include "a2dp_vendor_lhdc_constants.h"
 #include "client_interface_aidl.h"
 
 namespace bluetooth::audio::aidl::a2dp::codec {
