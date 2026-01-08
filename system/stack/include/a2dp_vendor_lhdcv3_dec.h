@@ -34,9 +34,9 @@ class A2dpCodecConfigLhdcV3Base : public A2dpCodecConfig {
                          const std::string& name,
                          btav_a2dp_codec_priority_t codec_priority,
                          bool is_source)
-      : A2dpCodecConfig(codec_index, A2DP_CODEC_ID_LHDCV3, name, codec_priority),
+      : A2dpCodecConfig(codec_index, bluetooth::a2dp::CodecId::LHDCV3, name, codec_priority),
         is_source_(is_source) {}
-  bool setCodecConfig(const uint8_t* p_peer_codec_info, bool is_capability,
+  tA2DP_STATUS setCodecConfig(const uint8_t* p_peer_codec_info, bool is_capability,
                       uint8_t* p_result_codec_config) override;
   bool setPeerCodecCapabilities(
       const uint8_t* p_peer_codec_capabilities) override;
@@ -86,7 +86,7 @@ bool A2DP_IsVendorPeerSourceCodecValidLhdcV3(const uint8_t* p_codec_info);
 // Checks whether A2DP SBC Sink codec is supported.
 // |p_codec_info| contains information about the codec capabilities.
 // Returns true if the A2DP SBC Sink codec is supported, otherwise false.
-bool A2DP_IsVendorSinkCodecSupportedLhdcV3(const uint8_t* p_codec_info);
+tA2DP_STATUS A2DP_IsVendorSinkCodecSupportedLhdcV3(const uint8_t* p_codec_info);
 
 // Checks whether an A2DP SBC Source codec for a peer Source device is
 // supported.

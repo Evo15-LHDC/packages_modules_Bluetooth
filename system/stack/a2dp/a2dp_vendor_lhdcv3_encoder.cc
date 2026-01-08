@@ -37,7 +37,7 @@
 #include "stack/include/bt_hdr.h"
 #include "osi/include/osi.h"
 #include <bluetooth/log.h>
-#include "os/log.h"
+
 using namespace bluetooth;
 
 //
@@ -132,7 +132,7 @@ static tLHDC_SET_MBR_FUNC lhdc_set_mbr_func;
 #endif
 
 
-namespace fmt {
+namespace std {
 template <>
 struct formatter<LHDCBT_SMPL_FMT_T> : enum_formatter<LHDCBT_SMPL_FMT_T> {};
 }  // namespace fmt

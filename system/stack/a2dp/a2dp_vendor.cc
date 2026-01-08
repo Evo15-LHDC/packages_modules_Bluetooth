@@ -167,6 +167,16 @@ tA2DP_STATUS A2DP_IsVendorSinkCodecSupported(const uint8_t* p_codec_info) {
     return A2DP_IsVendorSinkCodecSupportedOpus(p_codec_info);
   }
 
+  // Check for Savitech LHDCV3 Sink
+  else if (vendor_id == A2DP_LHDC_VENDOR_ID && codec_id == A2DP_LHDCV3_CODEC_ID) {
+    return A2DP_IsVendorSinkCodecSupportedLhdcV3(p_codec_info);
+  }
+
+  // Check for Savitech LHDCV5 Sink
+  else if (vendor_id == A2DP_LHDC_VENDOR_ID && codec_id == A2DP_LHDCV5_CODEC_ID) {
+    return A2DP_IsVendorSinkCodecSupportedLhdcV5(p_codec_info);
+  }
+
   return A2DP_NOT_SUPPORTED_CODEC_TYPE;
 }
 
