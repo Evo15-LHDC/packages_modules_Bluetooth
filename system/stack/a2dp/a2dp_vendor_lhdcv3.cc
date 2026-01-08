@@ -38,7 +38,7 @@
 #include "stack/include/bt_hdr.h"
 #include "osi/include/osi.h"
 #include <bluetooth/log.h>
-#include "os/log.h"
+
 using namespace bluetooth;
 
 typedef struct {
@@ -309,7 +309,7 @@ static tA2DP_STATUS A2DP_BuildInfoLhdcV3(uint8_t media_type,
 
   const uint8_t* tmpInfo = p_result;
   if (p_ie == NULL || p_result == NULL) {
-      return A2DP_INVALID_PARAMS;
+      return A2DP_INVALID_CODEC_PARAMETER;
   }
 
   *p_result++ = A2DP_LHDCV3_CODEC_LEN;    //0
@@ -409,19 +409,19 @@ static tA2DP_STATUS A2DP_ParseInfoLhdcV3(tA2DP_LHDC_CIE* p_ie,
   const uint8_t* tmpInfo = p_codec_info;
 
   //log::info( " : p_ie = {}, p_codec_info = {}", p_ie, p_codec_info);
-  if (p_ie == NULL || p_codec_info == NULL) return A2DP_INVALID_PARAMS;
+  if (p_ie == NULL || p_codec_info == NULL) return A2DP_INVALID_CODEC_PARAMETER;
 
   // Check the codec capability length
   losc = *p_codec_info++;
 
-  if (losc != A2DP_LHDCV3_CODEC_LEN) return A2DP_WRONG_CODEC;
+  if (losc != A2DP_LHDCV3_CODEC_LEN) return AVDTP_UNSUPPORTED_CONFIGURATION;
 
   media_type = (*p_codec_info++) >> 4;
-  codec_type = *p_codec_info++;
+  codec_type = static_cast<tA2DP_CODEC_TYPE>(*p_codec_info++);
   //log::info( " : media_type = {}, codec_type = {}", media_type, codec_type);
   /* Check the Media Type and Media Codec Type */
   if (media_type != AVDT_MEDIA_TYPE_AUDIO || codec_type != A2DP_MEDIA_CT_NON_A2DP) {
-      return A2DP_WRONG_CODEC;
+      return AVDTP_UNSUPPORTED_CONFIGURATION;
   }
 
   // Check the Vendor ID and Codec ID */
@@ -436,12 +436,12 @@ static tA2DP_STATUS A2DP_ParseInfoLhdcV3(tA2DP_LHDC_CIE* p_ie,
   log::info( " :Vendor(0x{:02x}), Codec(0x{:02x})", p_ie->vendorId, p_ie->codecId);
   if (p_ie->vendorId != A2DP_LHDC_VENDOR_ID ||
     p_ie->codecId != A2DP_LHDCV3_CODEC_ID) {
-    return A2DP_WRONG_CODEC;
+    return AVDTP_UNSUPPORTED_CONFIGURATION;
   }
 
   p_ie->sampleRate = *p_codec_info & A2DP_LHDC_SAMPLING_FREQ_MASK;
   if ((*p_codec_info & A2DP_LHDC_BIT_FMT_MASK) == 0) {
-    return A2DP_WRONG_CODEC;
+    return AVDTP_UNSUPPORTED_CONFIGURATION;
   }
 
   p_ie->bits_per_sample = BTAV_A2DP_CODEC_BITS_PER_SAMPLE_NONE;
@@ -494,7 +494,7 @@ static tA2DP_STATUS A2DP_ParseInfoLhdcV3(tA2DP_LHDC_CIE* p_ie,
   if (is_capability) return A2DP_SUCCESS;
 
   if (A2DP_BitsSet(p_ie->sampleRate) != A2DP_SET_ONE_BIT)
-    return A2DP_BAD_SAMP_FREQ;
+    return A2DP_INVALID_SAMPLING_FREQUENCY;
 
   return A2DP_SUCCESS;
 }
@@ -560,10 +560,10 @@ static tA2DP_STATUS A2DP_CodecInfoMatchesCapabilityLhdcV3(
              cfg_cie.bits_per_sample, p_cap->bits_per_sample);
 
   /* sampling frequency */
-  if ((cfg_cie.sampleRate & p_cap->sampleRate) == 0) return A2DP_NS_SAMP_FREQ;
+  if ((cfg_cie.sampleRate & p_cap->sampleRate) == 0) return A2DP_NOT_SUPPORTED_SAMPLING_FREQUENCY;
 
   /* bit per sample */
-  if ((cfg_cie.bits_per_sample & p_cap->bits_per_sample) == 0) return A2DP_NS_CH_MODE;
+  if ((cfg_cie.bits_per_sample & p_cap->bits_per_sample) == 0) return A2DP_INVALID_BIT_RATE;
 
   return A2DP_SUCCESS;
 }
@@ -630,7 +630,7 @@ bool A2DP_VendorCodecEqualsLhdcV3(const uint8_t* p_codec_info_a,
 }
 
 // Savitech Patch - START  Offload
-int A2DP_VendorGetBitRateLhdcV3(const uint8_t* p_codec_info) {
+int A2DP_VendorGetBitRateLhdcV3(UNUSED_ATTR const uint8_t* p_codec_info) {
 
   A2dpCodecConfig* current_codec = bta_av_get_a2dp_current_codec();
   btav_a2dp_codec_config_t codec_config_ = current_codec->getCodecConfig();
@@ -1089,7 +1089,7 @@ UNUSED_ATTR static void build_codec_config(const tA2DP_LHDC_CIE& config_cie,
 
 A2dpCodecConfigLhdcV3::A2dpCodecConfigLhdcV3(
     btav_a2dp_codec_priority_t codec_priority)
-    : A2dpCodecConfig(BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV3, A2DP_CODEC_ID_LHDCV3,
+    : A2dpCodecConfig(BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV3, bluetooth::a2dp::CodecId::LHDCV3,
                       A2DP_VendorCodecIndexStrLhdcV3(),
                       codec_priority) {
   // Compute the local capability        
@@ -1115,9 +1115,7 @@ A2dpCodecConfigLhdcV3::A2dpCodecConfigLhdcV3(
 A2dpCodecConfigLhdcV3::~A2dpCodecConfigLhdcV3() {}
 
 bool A2dpCodecConfigLhdcV3::init() {
-  if (!isValid()) return false;
-
-  // Load the encoder
+    // Load the encoder
   if (!A2DP_VendorLoadEncoderLhdcV3()) {
     log::error( " : cannot load the encoder");
     return false;
@@ -1470,7 +1468,7 @@ static uint32_t A2DP_MaxBitRatetoQualityLevelLhdcV3(uint8_t maxTargetBitrate)
 }
 
 
-bool A2dpCodecConfigLhdcV3::setCodecConfig(const uint8_t* p_peer_codec_info,
+tA2DP_STATUS A2dpCodecConfigLhdcV3::setCodecConfig(const uint8_t* p_peer_codec_info,
                                            bool is_capability,
                                            uint8_t* p_result_codec_config) {
   std::lock_guard<std::recursive_mutex> lock(codec_mutex_);
@@ -2357,7 +2355,7 @@ bool A2dpCodecConfigLhdcV3::setCodecConfig(const uint8_t* p_peer_codec_info,
              (unsigned long long)(codec_config_.codec_specific_3),
              (unsigned long long)(codec_config_.codec_specific_4));
 
-  return true;
+  return A2DP_SUCCESS;
 
 fail:
   // Restore the internal state
@@ -2370,7 +2368,7 @@ fail:
          sizeof(ota_codec_peer_capability_));
   memcpy(ota_codec_peer_config_, saved_ota_codec_peer_config,
          sizeof(ota_codec_peer_config_));
-  return false;
+  return A2DP_FAIL;
 }
 
 
