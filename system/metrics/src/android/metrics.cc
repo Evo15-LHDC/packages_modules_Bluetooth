@@ -203,11 +203,9 @@ void LogA2dpSessionReported(const hci::Address& address, const A2dpSession& sess
       codec_id = a2dp::CodecId::OPUS;
       break;
     case BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV3:
-      expresslog_metric_id = "bluetooth.value_lhdcv3_codec_usage_over_a2dp";
       codec_id = a2dp::CodecId::LHDCV3;
       break;
     case BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV5:
-      expresslog_metric_id = "bluetooth.value_lhdcv5_codec_usage_over_a2dp";
       codec_id = a2dp::CodecId::LHDCV5;
       break;
     default:
